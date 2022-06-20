@@ -1,0 +1,27 @@
+name: SysTask
+description: シスタスク
+title: "【〆 YY/MM/DD】シスタスク：施策名"
+labels: []
+assignees:
+  - tuyuri6ka
+body:
+  - type: textarea
+    id: abstract
+    attributes:
+      label: 概要
+      description: Tell me what happend, and what you want to do.
+      placeholder: Tell me what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: relevant issue/PR
+    attributes:
+      label: 関連Issue/PR
+      description: 関連するIssue/PRを記載してください。
+      placeholder: Please write relevant issue/PR.
+  - type: textarea
+    id: reference
+    attributes:
+      label: 参考文献
+      description: 参考文献があればを記載してください。
+      placeholder: Please write reference.
