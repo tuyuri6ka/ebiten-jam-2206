@@ -8,6 +8,7 @@ import (
 	"image/color"
 	_ "image/png"
 	"log"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -56,6 +57,8 @@ type Game struct {
 	rightFlg  bool
 	leftFlg   bool
 	groundFlg int
+
+	keys []ebiten.Key
 }
 
 // Update関数は、画面のリフレッシュレートに関わらず
@@ -75,6 +78,9 @@ func (g *Game) Update() error {
 		}
 	}
 
+	// キー入力をフレーム毎に受付
+	g.keys = inpututil.AppendPressedKeys(g.keys[:0])
+
 	return nil
 }
 
@@ -90,9 +96,16 @@ func (g *Game) isKeyJustPressed() bool {
 // 描画処理のみを行うことが推奨されます。ここで状態の変更を行うといろいろ事故ります。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
-	text.Draw(screen, fmt.Sprintf("Hisore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
-	text.Draw(screen, fmt.Sprintf("sore: %d", g.score), arcadeFont, 20, 35, color.Black)
+	text.Draw(screen, fmt.Sprintf("Hiscore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 35, color.Black)
 	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 50, color.Black)
+
+	// キーボード入力を表示させるを
+	keyStrs := []string{}
+	for _, p := range g.keys {
+		keyStrs = append(keyStrs, p.String())
+	}
+	text.Draw(screen, fmt.Sprintf("Keys: %s", strings.Join(keyStrs, ", ")), arcadeFont, 20, 75, color.Black)
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
