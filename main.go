@@ -84,6 +84,8 @@ func (g *Game) Update() error {
 		if g.isKeyJustPressed(ebiten.KeyArrowLeft) {
 			if g.prevKey == ebiten.KeyArrowRight {
 				g.acceleration += 1
+			} else if g.prevKey == ebiten.KeyArrowLeft {
+				g.acceleration -= 1
 			}
 			g.prevKey = ebiten.KeyArrowLeft
 			g.currentKey = ebiten.KeyArrowLeft
@@ -91,6 +93,8 @@ func (g *Game) Update() error {
 		if g.isKeyJustPressed(ebiten.KeyArrowRight) {
 			if g.prevKey == ebiten.KeyArrowLeft {
 				g.acceleration += 1
+			} else if g.prevKey == ebiten.KeyArrowRight {
+				g.acceleration -= 1
 			}
 			g.prevKey = ebiten.KeyArrowRight
 			g.currentKey = ebiten.KeyArrowRight
