@@ -45,18 +45,11 @@ var byteDinosaur1Img []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count     int
-	mode      int
-	score     int
-	hiscore   int
-	X         int
-	Y         int
-	jumpFlg   bool
-	upperFlg  bool
-	downFlg   bool
-	rightFlg  bool
-	leftFlg   bool
-	groundFlg int
+	count    int
+	mode     int
+	score    int
+	hiscore  int
+	velocity int
 
 	keys []ebiten.Key
 }
@@ -69,11 +62,11 @@ func (g *Game) Update() error {
 
 	switch g.mode {
 	case modeTitle:
-		if g.isKeyJustPressed() {
+		if g.isKeyJustPressed(ebiten.KeySpace) {
 			g.mode = modeGame
 		}
 	case modeGame:
-		if g.isKeyJustPressed() {
+		if g.isKeyJustPressed(ebiten.KeySpace) {
 			g.mode = modeTitle
 		}
 	}
@@ -85,8 +78,8 @@ func (g *Game) Update() error {
 }
 
 // スペースキーが押されたかを判定しています
-func (g *Game) isKeyJustPressed() bool {
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
+	if inpututil.IsKeyJustPressed(key) {
 		return true
 	}
 	return false
@@ -132,14 +125,6 @@ func (g *Game) init() *Game {
 	g.hiscore = g.score
 	g.count = 0
 	g.score = 0
-	g.X = 0
-	g.Y = 0
-	g.jumpFlg = false
-	g.upperFlg = false
-	g.downFlg = false
-	g.rightFlg = false
-	g.leftFlg = false
-	g.groundFlg = 0
 
 	return g
 }
