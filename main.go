@@ -8,6 +8,7 @@ import (
 	"image/color"
 	_ "image/png"
 	"log"
+	"math"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -28,6 +29,7 @@ const (
 	frameHeight = 150
 	frameNum    = 8
 	fontSize    = 10
+	coefficient = 0.4
 
 	// gmae modes
 	modeTitle = 0
@@ -121,17 +123,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
-	option.GeoM.Translate(-float64(frameWidth)/2, -float64(frameHeight)/2)
+
+	// 画像の中心をスクリーンの左上に移動させる
+	// ジオメトリマトリックス（回転や移動の処理）が適用される時の
+	// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
+	option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
+
+	// 構造体の状態を元に回転角度を算出する
+	option.GeoM.Rotate(float64(g.count%360) * 2 * math.Pi / 360)
+
+	// 画像を拡大/縮小する
+	option.GeoM.Scale(coefficient, coefficient)
+
+	// 画像を好きな位置に移動させる
+	// 今回は画像をスクリーンの中心に持ってくる
 	option.GeoM.Translate(screenWidth/2, screenHeight/2)
 
-	// 長方形画像をスライドして切り出すことで、表示させたい画像を抽出する。
-	// Rect(x0, y0, x1, y1)で(x0, y0),(x1 ,y1 )の範囲を切り出す
-	// x軸はslideX ~ slideX + frmaWidth の範囲。iの直で可変。
-	// y軸はslideY ~ slideY + frmaeHeight で固定値。
-	i := (g.count / 5) % frameNum
-	slideX, slideY := frameOX+i*frameWidth, frameOY
-	rectAngle := image.Rect(slideX, slideY, slideX+frameWidth, slideY+frameHeight)
-	screen.DrawImage(dinosaur1Img.SubImage(rectAngle).(*ebiten.Image), option)
+	// オプションを元に画像を描画する
+	screen.DrawImage(dinosaur1Img, option)
 }
 
 // Layout関数は、ウィンドウのリサイズの挙動を決定します。画面サイズを返すのが無難だが適宜調整してください。
