@@ -23,8 +23,6 @@ const (
 	screenWidth  = 300
 	screenHeight = 300
 
-	frameOX     = 0
-	frameOY     = 32
 	frameWidth  = 150
 	frameHeight = 150
 	frameNum    = 8
