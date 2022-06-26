@@ -117,6 +117,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("charge: %d", g.charge), arcadeFont, 20, 95, color.Black)
 	text.Draw(screen, fmt.Sprintf("prevKey: %d", g.prevKey), arcadeFont, 20, 110, color.Black)
 	text.Draw(screen, fmt.Sprintf("currentKey: %d", g.currentKey), arcadeFont, 20, 125, color.Black)
+	text.Draw(screen, fmt.Sprintf("g.count: %d", g.count), arcadeFont, 20, 140, color.Black)
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
