@@ -8,6 +8,7 @@ import (
 	"image/color"
 	_ "image/png"
 	"log"
+	"math"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -22,12 +23,11 @@ const (
 	screenWidth  = 300
 	screenHeight = 300
 
-	frameOX     = 0
-	frameOY     = 32
 	frameWidth  = 150
 	frameHeight = 150
 	frameNum    = 8
 	fontSize    = 10
+	coefficient = 0.4
 
 	// gmae modes
 	modeTitle = 0
@@ -45,20 +45,26 @@ var byteDinosaur1Img []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count     int
-	mode      int
-	score     int
-	hiscore   int
-	X         int
-	Y         int
-	jumpFlg   bool
-	upperFlg  bool
-	downFlg   bool
-	rightFlg  bool
-	leftFlg   bool
-	groundFlg int
+	count      int
+	mode       int
+	score      int
+	hiscore    int
+	velocity   int
+	charge     int
+	prevKey    int
+	currentKey int
 
 	keys []ebiten.Key
+}
+
+// 構造体の初期化を行なっています。
+func (g *Game) init() *Game {
+	g.hiscore = g.score
+	g.count = 0
+	g.score = 0
+	g.velocity = 0
+
+	return g
 }
 
 // Update関数は、画面のリフレッシュレートに関わらず
@@ -69,11 +75,11 @@ func (g *Game) Update() error {
 
 	switch g.mode {
 	case modeTitle:
-		if g.isKeyJustPressed() {
+		if g.isKeyJustPressed(ebiten.KeySpace) {
 			g.mode = modeGame
 		}
 	case modeGame:
-		if g.isKeyJustPressed() {
+		if g.isKeyJustPressed(ebiten.KeySpace) {
 			g.mode = modeTitle
 		}
 	}
@@ -85,8 +91,8 @@ func (g *Game) Update() error {
 }
 
 // スペースキーが押されたかを判定しています
-func (g *Game) isKeyJustPressed() bool {
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
+	if inpututil.IsKeyJustPressed(key) {
 		return true
 	}
 	return false
@@ -96,52 +102,48 @@ func (g *Game) isKeyJustPressed() bool {
 // 描画処理のみを行うことが推奨されます。ここで状態の変更を行うといろいろ事故ります。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
-	text.Draw(screen, fmt.Sprintf("Hiscore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
-	text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 35, color.Black)
-	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 50, color.Black)
 
 	// キーボード入力を表示させるを
 	keyStrs := []string{}
 	for _, p := range g.keys {
 		keyStrs = append(keyStrs, p.String())
 	}
-	text.Draw(screen, fmt.Sprintf("Keys: %s", strings.Join(keyStrs, ", ")), arcadeFont, 20, 75, color.Black)
+
+	text.Draw(screen, fmt.Sprintf("Hiscore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 35, color.Black)
+	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 50, color.Black)
+	text.Draw(screen, fmt.Sprintf("Keys: %s", strings.Join(keyStrs, ", ")), arcadeFont, 20, 65, color.Black)
+	text.Draw(screen, fmt.Sprintf("velocity: %d", g.velocity), arcadeFont, 20, 80, color.Black)
+	text.Draw(screen, fmt.Sprintf("charge: %d", g.charge), arcadeFont, 20, 95, color.Black)
+	text.Draw(screen, fmt.Sprintf("prevKey: %d", g.prevKey), arcadeFont, 20, 110, color.Black)
+	text.Draw(screen, fmt.Sprintf("currentKey: %d", g.currentKey), arcadeFont, 20, 125, color.Black)
+	text.Draw(screen, fmt.Sprintf("g.count: %d", g.count), arcadeFont, 20, 140, color.Black)
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
-	option.GeoM.Translate(-float64(frameWidth)/2, -float64(frameHeight)/2)
+
+	// 画像の中心をスクリーンの左上に移動させる
+	// ジオメトリマトリックス（回転や移動の処理）が適用される時の
+	// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
+	option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
+
+	// 構造体の状態を元に回転角度を算出する
+	option.GeoM.Rotate(float64(g.count%360) * 2 * math.Pi / 360)
+
+	// 画像を拡大/縮小する
+	option.GeoM.Scale(coefficient, coefficient)
+
+	// 画像を好きな位置に移動させる
+	// 今回は画像をスクリーンの中心に持ってくる
 	option.GeoM.Translate(screenWidth/2, screenHeight/2)
 
-	// 長方形画像をスライドして切り出すことで、表示させたい画像を抽出する。
-	// Rect(x0, y0, x1, y1)で(x0, y0),(x1 ,y1 )の範囲を切り出す
-	// x軸はslideX ~ slideX + frmaWidth の範囲。iの直で可変。
-	// y軸はslideY ~ slideY + frmaeHeight で固定値。
-	i := (g.count / 5) % frameNum
-	slideX, slideY := frameOX+i*frameWidth, frameOY
-	rectAngle := image.Rect(slideX, slideY, slideX+frameWidth, slideY+frameHeight)
-	screen.DrawImage(dinosaur1Img.SubImage(rectAngle).(*ebiten.Image), option)
+	// オプションを元に画像を描画する
+	screen.DrawImage(dinosaur1Img, option)
 }
 
 // Layout関数は、ウィンドウのリサイズの挙動を決定します。画面サイズを返すのが無難だが適宜調整してください。
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenWidth, screenHeight
-}
-
-// 構造体の初期化を行なっています。
-func (g *Game) init() *Game {
-	g.hiscore = g.score
-	g.count = 0
-	g.score = 0
-	g.X = 0
-	g.Y = 0
-	g.jumpFlg = false
-	g.upperFlg = false
-	g.downFlg = false
-	g.rightFlg = false
-	g.leftFlg = false
-	g.groundFlg = 0
-
-	return g
 }
 
 // init関数はパッケージの初期化に使われる特殊な関数で、main関数が呼ばれる前に実行されます。
