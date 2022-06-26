@@ -9,7 +9,6 @@ import (
 	_ "image/png"
 	"log"
 	"math"
-	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -45,16 +44,16 @@ var byteDinosaur1Img []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count      int
-	mode       int
-	score      int
-	hiscore    int
-	velocity   int
-	charge     int
-	prevKey    int
-	currentKey int
+	count    int
+	mode     int
+	score    int
+	hiscore  int
+	acceleration int
+	charge   int
 
-	keys []ebiten.Key
+	prevKey    ebiten.Key
+	currentKey ebiten.Key
+	keys       []ebiten.Key
 }
 
 // 構造体の初期化を行なっています。
@@ -62,7 +61,7 @@ func (g *Game) init() *Game {
 	g.hiscore = g.score
 	g.count = 0
 	g.score = 0
-	g.velocity = 0
+	g.acceleration = 0
 
 	return g
 }
@@ -81,6 +80,20 @@ func (g *Game) Update() error {
 	case modeGame:
 		if g.isKeyJustPressed(ebiten.KeySpace) {
 			g.mode = modeTitle
+		}
+		if g.isKeyJustPressed(ebiten.KeyArrowLeft) {
+			if g.prevKey == ebiten.KeyArrowRight {
+				g.acceleration += 1
+			}
+			g.prevKey = ebiten.KeyArrowLeft
+			g.currentKey = ebiten.KeyArrowLeft
+		}
+		if g.isKeyJustPressed(ebiten.KeyArrowRight) {
+			if g.prevKey == ebiten.KeyArrowLeft {
+				g.acceleration += 1
+			}
+			g.prevKey = ebiten.KeyArrowRight
+			g.currentKey = ebiten.KeyArrowRight
 		}
 	}
 
@@ -109,15 +122,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		keyStrs = append(keyStrs, p.String())
 	}
 
-	text.Draw(screen, fmt.Sprintf("Hiscore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
-	text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 35, color.Black)
-	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 50, color.Black)
-	text.Draw(screen, fmt.Sprintf("Keys: %s", strings.Join(keyStrs, ", ")), arcadeFont, 20, 65, color.Black)
-	text.Draw(screen, fmt.Sprintf("velocity: %d", g.velocity), arcadeFont, 20, 80, color.Black)
-	text.Draw(screen, fmt.Sprintf("charge: %d", g.charge), arcadeFont, 20, 95, color.Black)
-	text.Draw(screen, fmt.Sprintf("prevKey: %d", g.prevKey), arcadeFont, 20, 110, color.Black)
-	text.Draw(screen, fmt.Sprintf("currentKey: %d", g.currentKey), arcadeFont, 20, 125, color.Black)
-	text.Draw(screen, fmt.Sprintf("g.count: %d", g.count), arcadeFont, 20, 140, color.Black)
+	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 30, color.Black)
+	text.Draw(screen, fmt.Sprintf("charge: %d", g.charge), arcadeFont, 20, 40, color.Black)
+	text.Draw(screen, fmt.Sprintf("g.count: %d", (g.count%360)), arcadeFont, 20, 50, color.Black)
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
@@ -128,7 +136,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
 
 	// 構造体の状態を元に回転角度を算出する
-	option.GeoM.Rotate(float64(g.count%360) * 2 * math.Pi / 360)
+	option.GeoM.Rotate(float64(float64((g.count * g.acceleration)%360) * 2 * math.Pi / 360))
 
 	// 画像を拡大/縮小する
 	option.GeoM.Scale(coefficient, coefficient)
