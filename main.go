@@ -57,6 +57,16 @@ type Game struct {
 	keys []ebiten.Key
 }
 
+// 構造体の初期化を行なっています。
+func (g *Game) init() *Game {
+	g.hiscore = g.score
+	g.count = 0
+	g.score = 0
+	g.velocity = 0
+
+	return g
+}
+
 // Update関数は、画面のリフレッシュレートに関わらず
 // 常に毎秒60回呼ばれます（既定値）。
 // 描画ではなく更新処理を行うことが推奨されます。
@@ -126,16 +136,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Layout関数は、ウィンドウのリサイズの挙動を決定します。画面サイズを返すのが無難だが適宜調整してください。
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenWidth, screenHeight
-}
-
-// 構造体の初期化を行なっています。
-func (g *Game) init() *Game {
-	g.hiscore = g.score
-	g.count = 0
-	g.score = 0
-	g.velocity = 0
-
-	return g
 }
 
 // init関数はパッケージの初期化に使われる特殊な関数で、main関数が呼ばれる前に実行されます。
