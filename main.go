@@ -45,11 +45,14 @@ var byteDinosaur1Img []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count    int
-	mode     int
-	score    int
-	hiscore  int
-	velocity int
+	count      int
+	mode       int
+	score      int
+	hiscore    int
+	velocity   int
+	charge     int
+	prevKey    int
+	currentKey int
 
 	keys []ebiten.Key
 }
@@ -89,16 +92,21 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 // 描画処理のみを行うことが推奨されます。ここで状態の変更を行うといろいろ事故ります。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
-	text.Draw(screen, fmt.Sprintf("Hiscore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
-	text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 35, color.Black)
-	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 50, color.Black)
 
 	// キーボード入力を表示させるを
 	keyStrs := []string{}
 	for _, p := range g.keys {
 		keyStrs = append(keyStrs, p.String())
 	}
-	text.Draw(screen, fmt.Sprintf("Keys: %s", strings.Join(keyStrs, ", ")), arcadeFont, 20, 75, color.Black)
+
+	text.Draw(screen, fmt.Sprintf("Hiscore: %d", g.hiscore), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 35, color.Black)
+	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 50, color.Black)
+	text.Draw(screen, fmt.Sprintf("Keys: %s", strings.Join(keyStrs, ", ")), arcadeFont, 20, 65, color.Black)
+	text.Draw(screen, fmt.Sprintf("velocity: %d", g.velocity), arcadeFont, 20, 80, color.Black)
+	text.Draw(screen, fmt.Sprintf("charge: %d", g.charge), arcadeFont, 20, 95, color.Black)
+	text.Draw(screen, fmt.Sprintf("prevKey: %d", g.prevKey), arcadeFont, 20, 110, color.Black)
+	text.Draw(screen, fmt.Sprintf("currentKey: %d", g.currentKey), arcadeFont, 20, 125, color.Black)
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
@@ -125,6 +133,7 @@ func (g *Game) init() *Game {
 	g.hiscore = g.score
 	g.count = 0
 	g.score = 0
+	g.velocity = 0
 
 	return g
 }
