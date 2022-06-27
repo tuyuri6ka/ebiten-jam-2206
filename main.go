@@ -9,6 +9,8 @@ import (
 	_ "image/png"
 	"log"
 	"math"
+	"strconv"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -27,6 +29,7 @@ const (
 	frameNum    = 8
 	fontSize    = 10
 	coefficient = 0.4
+	gaugeMax    = 20
 
 	// gmae modes
 	modeTitle = 0
@@ -44,12 +47,11 @@ var byteDinosaur1Img []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count    int
-	mode     int
-	score    int
-	hiscore  int
+	count        int
+	mode         int
+	score        int
+	hiscore      int
 	acceleration int
-	charge   int
 
 	prevKey    ebiten.Key
 	currentKey ebiten.Key
@@ -120,16 +122,23 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
 
-	// キーボード入力を表示させるを
-	keyStrs := []string{}
-	for _, p := range g.keys {
-		keyStrs = append(keyStrs, p.String())
+	// ゲージの進捗度を計算する
+	charge := float64(g.count * g.acceleration / 360)
+	chargeStatus := int(charge / 100)
+	gauge := ""
+	if chargeStatus > gaugeMax {
+		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
+		gauge += strings.Repeat("|", gaugeMax)
+	} else if chargeStatus >= 0 {
+		gauge = "[" + strconv.Itoa(chargeStatus) + "/" + strconv.Itoa(gaugeMax) + "]"
+		gauge += strings.Repeat("|", chargeStatus)
+	} else {
+		gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
 	}
 
-	text.Draw(screen, fmt.Sprintf("mode: %d", g.mode), arcadeFont, 20, 20, color.Black)
-	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 30, color.Black)
-	text.Draw(screen, fmt.Sprintf("charge: %d", g.charge), arcadeFont, 20, 40, color.Black)
-	text.Draw(screen, fmt.Sprintf("g.count: %d", (g.count%360)), arcadeFont, 20, 50, color.Black)
+	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
+	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
 
 	// ebitenで画像を表示に関わるオプション設定をします
 	option := &ebiten.DrawImageOptions{}
@@ -140,7 +149,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
 
 	// 構造体の状態を元に回転角度を算出する
-	option.GeoM.Rotate(float64(float64((g.count * g.acceleration)%360) * 2 * math.Pi / 360))
+	option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
 
 	// 画像を拡大/縮小する
 	option.GeoM.Scale(coefficient, coefficient)
