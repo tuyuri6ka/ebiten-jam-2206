@@ -122,12 +122,6 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
 
-	// キーボード入力を表示させるを
-	keyStrs := []string{}
-	for _, p := range g.keys {
-		keyStrs = append(keyStrs, p.String())
-	}
-
 	// ゲージの進捗度を計算する
 	charge := float64(g.count * g.acceleration / 360)
 	chargeStatus := int(charge / 100)
