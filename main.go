@@ -129,9 +129,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if chargeStatus > gaugeMax {
 		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
 		gauge += strings.Repeat("|", gaugeMax)
-	} else {
+	} else if chargeStatus >= 0 {
 		gauge = "[" + strconv.Itoa(chargeStatus) + "/" + strconv.Itoa(gaugeMax) + "]"
 		gauge += strings.Repeat("|", chargeStatus)
+	} else {
+		gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
 	}
 
 	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
