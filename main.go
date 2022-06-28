@@ -28,7 +28,7 @@ const (
 
 	fontSize    = 10
 	coefficient = 1
-	gaugeMax    = 5
+	gaugeMax    = 500
 
 	// gmae modes
 	modeTitle  = 0
@@ -91,8 +91,7 @@ func (g *Game) Update() error {
 
 		// チャージが満タンになったらゲームクリアになる
 		charge := float64(g.count * g.acceleration / 360)
-		chargeStatus := int(charge / 100)
-		if chargeStatus >= gaugeMax {
+		if charge >= float64(gaugeMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
 			if g.score < g.hiscore {
@@ -148,7 +147,7 @@ func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
 		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
 	} else if g.mode == modeFinish {
-		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax), arcadeFont, 20, 30, color.Black)
 		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
 		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
 		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
@@ -199,11 +198,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		charge := float64(g.count * g.acceleration / 360)
 		chargeStatus := int(charge / 100)
 		gauge := ""
-		if chargeStatus > gaugeMax {
+		if charge > gaugeMax {
 			gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
-			gauge += strings.Repeat("|", gaugeMax)
-		} else if chargeStatus >= 0 {
-			gauge = "[" + strconv.Itoa(chargeStatus) + "/" + strconv.Itoa(gaugeMax) + "]"
+			gauge += strings.Repeat("|", chargeStatus)
+		} else if charge >= 0 {
+			gauge = "[" + strconv.Itoa(int(charge)) + "/" + strconv.Itoa(gaugeMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else {
 			gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
@@ -221,7 +220,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// ゲージの進捗度を計算する
 		gauge := ""
 		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
-		gauge += strings.Repeat("|", gaugeMax)
+		gauge += strings.Repeat("|", gaugeMax/100)
 
 		// テキストを画面に表示する
 		charge := float64(g.count * g.acceleration / 360)
