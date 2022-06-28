@@ -23,6 +23,8 @@ import (
 const (
 	screenWidth  = 320
 	screenHeight = 320
+	imageWidth = 224
+	imageHeight = 224
 
 	fontSize    = 10
 	coefficient = 1
@@ -138,6 +140,51 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 	return false
 }
 
+func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
+	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
+	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+
+	if g.mode == modeGame {
+		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
+	}	else if g.mode == modeFinish {
+		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
+	} else {
+		// 何もしない
+	}
+
+	if g.hiscore < defaultScore {
+		text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
+	} else {
+		// 何もしない
+	}
+}
+
+func prepareDrawOption(g *Game) *ebiten.DrawImageOptions {
+	// ebitenで画像を表示に関わるオプション設定をします
+	option := &ebiten.DrawImageOptions{}
+
+	// 画像の中心をスクリーンの左上に移動させる
+	// ジオメトリマトリックス（回転や移動の処理）が適用される時の
+	// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
+	option.GeoM.Translate(-float64(imageWidth/2), -float64(imageHeight/2))
+
+	// 構造体の状態を元に回転角度を算出する
+	option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
+
+	// 画像を拡大/縮小する
+	option.GeoM.Scale(coefficient, coefficient)
+
+	// 画像を好きな位置に移動させる
+	// 今回は画像をスクリーンの中心に持ってくる
+	option.GeoM.Translate(screenWidth/2, screenHeight/2)
+
+	return option
+}
+
 // Draw関数は、画面のリフレッシュレートと同期して呼ばれます（既定値）。
 // 描画処理のみを行うことが推奨されます。ここで状態の変更を行うといろいろ事故ります。
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -162,31 +209,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
 		}
 
-		text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-		text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
-		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
-		if g.hiscore < defaultScore {
-			text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
-		}
+		// テキストを画面に表示する
+		textDraw(g, gauge, charge, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
-		option := &ebiten.DrawImageOptions{}
-
-		// 画像の中心をスクリーンの左上に移動させる
-		// ジオメトリマトリックス（回転や移動の処理）が適用される時の
-		// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
-		option.GeoM.Translate(-float64(224/2), -float64(224)/2)
-
-		// 構造体の状態を元に回転角度を算出する
-		option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
-
-		// 画像を拡大/縮小する
-		option.GeoM.Scale(coefficient, coefficient)
-
-		// 画像を好きな位置に移動させる
-		// 今回は画像をスクリーンの中心に持ってくる
-		option.GeoM.Translate(screenWidth/2, screenHeight/2)
+		option := prepareDrawOption(g)
 
 		// オプションを元に画像を描画する
 		screen.DrawImage(electromagnetImg, option)
@@ -196,33 +223,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
 		gauge += strings.Repeat("|", gaugeMax)
 
-		text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-		text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
-		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
-		if g.hiscore < defaultScore {
-			text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
-		}
-		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
-		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
+		// テキストを画面に表示する
+		charge := float64(g.count * g.acceleration / 360)
+		textDraw(g, gauge, charge, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
-		option := &ebiten.DrawImageOptions{}
-
-		// 画像の中心をスクリーンの左上に移動させる
-		// ジオメトリマトリックス（回転や移動の処理）が適用される時の
-		// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
-		option.GeoM.Translate(-float64(224)/2, -float64(224)/2)
-
-		// 構造体の状態を元に回転角度を算出する
-		option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
-
-		// 画像を拡大/縮小する
-		option.GeoM.Scale(coefficient, coefficient)
-
-		// 画像を好きな位置に移動させる
-		// 今回は画像をスクリーンの中心に持ってくる
-		option.GeoM.Translate(screenWidth/2, screenHeight/2)
+		option := prepareDrawOption(g)
 
 		// オプションを元に画像を描画する
 		screen.DrawImage(electromagnetImg, option)
