@@ -54,7 +54,7 @@ type Game struct {
 	mode         int
 	score        int
 	hiscore      int
-	acceleration int
+	angularVelocity int
 	rotateNum    float64
 
 	prevKey    ebiten.Key
@@ -69,7 +69,7 @@ func (g *Game) init() *Game {
 	}
 	g.count = 0
 	g.score = 0
-	g.acceleration = 0
+	g.angularVelocity = 0
 	g.rotateNum = 0
 
 	return g
@@ -93,7 +93,7 @@ func (g *Game) Update() error {
 		}
 
 		// チャージが満タンになったらゲームクリアになる
-		g.rotateNum += float64(fps * g.acceleration) / 360
+		g.rotateNum += float64(fps * g.angularVelocity) / 360
 		if g.rotateNum >= float64(rotateNumMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
@@ -105,18 +105,18 @@ func (g *Game) Update() error {
 
 		if g.isKeyJustPressed(ebiten.KeyArrowLeft) {
 			if g.prevKey == ebiten.KeyArrowRight {
-				g.acceleration += 1
+				g.angularVelocity += 1
 			} else if g.prevKey == ebiten.KeyArrowLeft {
-				g.acceleration -= 1
+				g.angularVelocity -= 1
 			}
 			g.prevKey = ebiten.KeyArrowLeft
 			g.currentKey = ebiten.KeyArrowLeft
 		}
 		if g.isKeyJustPressed(ebiten.KeyArrowRight) {
 			if g.prevKey == ebiten.KeyArrowLeft {
-				g.acceleration += 1
+				g.angularVelocity += 1
 			} else if g.prevKey == ebiten.KeyArrowRight {
-				g.acceleration -= 1
+				g.angularVelocity -= 1
 			}
 			g.prevKey = ebiten.KeyArrowRight
 			g.currentKey = ebiten.KeyArrowRight
@@ -144,7 +144,7 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 
 func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("verocity: %d", g.angularVelocity), arcadeFont, 20, 20, color.Black)
 
 	if g.mode == modeGame {
 		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 30, color.Black)
@@ -173,7 +173,7 @@ func prepareDrawOption(g *Game) *ebiten.DrawImageOptions {
 	option.GeoM.Translate(-float64(imageWidth/2), -float64(imageHeight/2))
 
 	// 構造体の状態を元に回転角度を算出する
-	option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
+	option.GeoM.Rotate(float64(float64((g.count*g.angularVelocity)%360) * 2 * math.Pi / 360))
 
 	// 画像を拡大/縮小する
 	option.GeoM.Scale(coefficient, coefficient)
@@ -196,7 +196,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("The magnet will start spinning!"), arcadeFont, 0, int(screenHeight)/2+20, color.Black)
 	} else if g.mode == modeGame {
 		// ゲージの進捗度を計算する
-		g.rotateNum += float64(fps * g.acceleration)/360
+		g.rotateNum += float64(fps * g.angularVelocity)/360
 		chargeStatus := int(g.rotateNum / 100)
 		gauge := ""
 		if g.rotateNum > rotateNumMax {
@@ -224,7 +224,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		gauge += strings.Repeat("|", rotateNumMax/100)
 
 		// テキストを画面に表示する
-		g.rotateNum += float64(fps * g.acceleration) / 360
+		g.rotateNum += float64(fps * g.angularVelocity) / 360
 		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
