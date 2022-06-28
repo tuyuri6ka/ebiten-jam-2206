@@ -26,9 +26,10 @@ const (
 	imageWidth   = 224
 	imageHeight  = 224
 
-	fontSize    = 10
-	coefficient = 1
-	chargeMax    = 500
+	fontSize         = 10
+	coefficient      = 1
+	rotateNumMax     = 500
+	fps          int = 1
 
 	// gmae modes
 	modeTitle  = 0
@@ -49,11 +50,12 @@ var byteElectroMagnetImg []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count        int
-	mode         int
-	score        int
-	hiscore      int
-	acceleration int
+	count           int
+	mode            int
+	score           int
+	hiscore         int
+	angularVelocity int
+	rotateNum       float64
 
 	prevKey    ebiten.Key
 	currentKey ebiten.Key
@@ -67,7 +69,8 @@ func (g *Game) init() *Game {
 	}
 	g.count = 0
 	g.score = 0
-	g.acceleration = 0
+	g.angularVelocity = 0
+	g.rotateNum = 0
 
 	return g
 }
@@ -90,8 +93,8 @@ func (g *Game) Update() error {
 		}
 
 		// チャージが満タンになったらゲームクリアになる
-		charge := float64(g.count * g.acceleration / 360)
-		if charge >= float64(chargeMax) {
+		g.rotateNum += float64(fps*g.angularVelocity) / 360
+		if g.rotateNum >= float64(rotateNumMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
 			if g.score < g.hiscore {
@@ -102,18 +105,18 @@ func (g *Game) Update() error {
 
 		if g.isKeyJustPressed(ebiten.KeyArrowLeft) {
 			if g.prevKey == ebiten.KeyArrowRight {
-				g.acceleration += 1
+				g.angularVelocity += 1
 			} else if g.prevKey == ebiten.KeyArrowLeft {
-				g.acceleration -= 1
+				g.angularVelocity -= 1
 			}
 			g.prevKey = ebiten.KeyArrowLeft
 			g.currentKey = ebiten.KeyArrowLeft
 		}
 		if g.isKeyJustPressed(ebiten.KeyArrowRight) {
 			if g.prevKey == ebiten.KeyArrowLeft {
-				g.acceleration += 1
+				g.angularVelocity += 1
 			} else if g.prevKey == ebiten.KeyArrowRight {
-				g.acceleration -= 1
+				g.angularVelocity -= 1
 			}
 			g.prevKey = ebiten.KeyArrowRight
 			g.currentKey = ebiten.KeyArrowRight
@@ -141,7 +144,7 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 
 func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("velocity: %d", g.angularVelocity), arcadeFont, 20, 20, color.Black)
 
 	if g.mode == modeGame {
 		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 30, color.Black)
@@ -170,7 +173,7 @@ func prepareDrawOption(g *Game) *ebiten.DrawImageOptions {
 	option.GeoM.Translate(-float64(imageWidth/2), -float64(imageHeight/2))
 
 	// 構造体の状態を元に回転角度を算出する
-	option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
+	option.GeoM.Rotate(float64(float64((g.count*g.angularVelocity)%360) * 2 * math.Pi / 360))
 
 	// 画像を拡大/縮小する
 	option.GeoM.Scale(coefficient, coefficient)
@@ -193,21 +196,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("The magnet will start spinning!"), arcadeFont, 0, int(screenHeight)/2+20, color.Black)
 	} else if g.mode == modeGame {
 		// ゲージの進捗度を計算する
-		charge := float64(g.count * g.acceleration / 360)
-		chargeStatus := int(charge / 100)
+		g.rotateNum += float64(fps*g.angularVelocity) / 360
+		chargeStatus := int(g.rotateNum / 100)
 		gauge := ""
-		if charge > chargeMax {
-			gauge = "[" + strconv.Itoa(chargeMax) + "/" + strconv.Itoa(chargeMax) + "]"
+		if g.rotateNum > rotateNumMax {
+			gauge = "[" + strconv.Itoa(rotateNumMax) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
-		} else if charge >= 0 {
-			gauge = "[" + strconv.Itoa(int(charge)) + "/" + strconv.Itoa(chargeMax) + "]"
+		} else if g.rotateNum >= 0 {
+			gauge = "[" + strconv.Itoa(int(g.rotateNum)) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else {
-			gauge = "[0" + "/" + strconv.Itoa(chargeMax) + "]"
+			gauge = "[" + strconv.Itoa(int(g.rotateNum)) + "/" + strconv.Itoa(rotateNumMax) + "]"
 		}
 
 		// テキストを画面に表示する
-		textDraw(g, gauge, charge, screen)
+		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
 		option := prepareDrawOption(g)
@@ -217,12 +220,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if g.mode == modeFinish {
 		// ゲージの進捗度を計算する
 		gauge := ""
-		gauge = "[" + strconv.Itoa(chargeMax) + "/" + strconv.Itoa(chargeMax) + "]"
-		gauge += strings.Repeat("|", chargeMax/100)
+		gauge = "[" + strconv.Itoa(rotateNumMax) + "/" + strconv.Itoa(rotateNumMax) + "]"
+		gauge += strings.Repeat("|", rotateNumMax/100)
 
 		// テキストを画面に表示する
-		charge := float64(g.count * g.acceleration / 360)
-		textDraw(g, gauge, charge, screen)
+		g.rotateNum += float64(fps*g.angularVelocity) / 360
+		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
 		option := prepareDrawOption(g)
@@ -272,7 +275,7 @@ func _main() error {
 	}
 
 	// ウィンドウズサイズとウィンドウ上部の表示タイトルを指定します。
-	ebiten.SetWindowTitle("Animation (Ebiten Demo)")
+	ebiten.SetWindowTitle("ElectroMagnetCharger (EbitengineGameJam202206)")
 	ebiten.SetWindowSize(screenWidth*2, screenHeight*2)
 	return ebiten.RunGame(g)
 }
