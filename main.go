@@ -138,6 +138,30 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 	return false
 }
 
+func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
+	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
+	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+
+	if g.mode == modeGame {
+		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
+	}	else if g.mode == modeFinish {
+		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
+	} else {
+		// 何もしない
+	}
+
+	if g.hiscore < defaultScore {
+		text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
+	} else {
+		// 何もしない
+	}
+
+}
+
 // Draw関数は、画面のリフレッシュレートと同期して呼ばれます（既定値）。
 // 描画処理のみを行うことが推奨されます。ここで状態の変更を行うといろいろ事故ります。
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -162,13 +186,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
 		}
 
-		text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-		text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
-		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
-		if g.hiscore < defaultScore {
-			text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
-		}
+		// テキストを画面に表示する
+		textDraw(g, gauge, charge, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
 		option := &ebiten.DrawImageOptions{}
@@ -196,15 +215,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
 		gauge += strings.Repeat("|", gaugeMax)
 
-		text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-		text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
-		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
-		if g.hiscore < defaultScore {
-			text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
-		}
-		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
-		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
+		// テキストを画面に表示する
+		charge := float64(g.count * g.acceleration / 360)
+		textDraw(g, gauge, charge, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
 		option := &ebiten.DrawImageOptions{}
