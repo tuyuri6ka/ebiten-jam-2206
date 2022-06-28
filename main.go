@@ -26,10 +26,10 @@ const (
 	imageWidth   = 224
 	imageHeight  = 224
 
-	fontSize     = 10
-	coefficient  = 1
-	rotateNumMax = 500
-	fps int = 1
+	fontSize         = 10
+	coefficient      = 1
+	rotateNumMax     = 500
+	fps          int = 1
 
 	// gmae modes
 	modeTitle  = 0
@@ -50,12 +50,12 @@ var byteElectroMagnetImg []byte
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
 type Game struct {
-	count        int
-	mode         int
-	score        int
-	hiscore      int
+	count           int
+	mode            int
+	score           int
+	hiscore         int
 	angularVelocity int
-	rotateNum    float64
+	rotateNum       float64
 
 	prevKey    ebiten.Key
 	currentKey ebiten.Key
@@ -93,7 +93,7 @@ func (g *Game) Update() error {
 		}
 
 		// チャージが満タンになったらゲームクリアになる
-		g.rotateNum += float64(fps * g.angularVelocity) / 360
+		g.rotateNum += float64(fps*g.angularVelocity) / 360
 		if g.rotateNum >= float64(rotateNumMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
@@ -196,7 +196,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("The magnet will start spinning!"), arcadeFont, 0, int(screenHeight)/2+20, color.Black)
 	} else if g.mode == modeGame {
 		// ゲージの進捗度を計算する
-		g.rotateNum += float64(fps * g.angularVelocity)/360
+		g.rotateNum += float64(fps*g.angularVelocity) / 360
 		chargeStatus := int(g.rotateNum / 100)
 		gauge := ""
 		if g.rotateNum > rotateNumMax {
@@ -224,7 +224,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		gauge += strings.Repeat("|", rotateNumMax/100)
 
 		// テキストを画面に表示する
-		g.rotateNum += float64(fps * g.angularVelocity) / 360
+		g.rotateNum += float64(fps*g.angularVelocity) / 360
 		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
