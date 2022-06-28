@@ -21,19 +21,19 @@ import (
 )
 
 const (
-	screenWidth  = 300
-	screenHeight = 300
+	screenWidth  = 320
+	screenHeight = 320
 
-	frameWidth  = 150
-	frameHeight = 150
-	frameNum    = 8
 	fontSize    = 10
 	coefficient = 0.4
-	gaugeMax    = 20
+	gaugeMax    = 5
 
 	// gmae modes
-	modeTitle = 0
-	modeGame  = 1
+	modeTitle  = 0
+	modeGame   = 1
+	modeFinish = 2
+
+	defaultScore = 999999999
 )
 
 var (
@@ -60,7 +60,9 @@ type Game struct {
 
 // 構造体の初期化を行なっています。
 func (g *Game) init() *Game {
-	g.hiscore = g.score
+	if g.hiscore == 0 {
+		g.hiscore = defaultScore
+	}
 	g.count = 0
 	g.score = 0
 	g.acceleration = 0
@@ -80,9 +82,23 @@ func (g *Game) Update() error {
 			g.mode = modeGame
 		}
 	case modeGame:
-		if g.isKeyJustPressed(ebiten.KeySpace) {
+		if g.isKeyJustPressed(ebiten.KeyEscape) {
 			g.mode = modeTitle
+			g.init()
 		}
+
+		// チャージが満タンになったらゲームクリアになる
+		charge := float64(g.count * g.acceleration / 360)
+		chargeStatus := int(charge / 100)
+		if chargeStatus >= gaugeMax {
+			// 記録の保存 端数は切り捨て
+			g.score = g.count
+			if g.score < g.hiscore {
+				g.hiscore = g.score
+			}
+			g.mode = modeFinish
+		}
+
 		if g.isKeyJustPressed(ebiten.KeyArrowLeft) {
 			if g.prevKey == ebiten.KeyArrowRight {
 				g.acceleration += 1
@@ -100,6 +116,11 @@ func (g *Game) Update() error {
 			}
 			g.prevKey = ebiten.KeyArrowRight
 			g.currentKey = ebiten.KeyArrowRight
+		}
+	case modeFinish:
+		if g.isKeyJustPressed(ebiten.KeyEscape) {
+			g.mode = modeTitle
+			g.init()
 		}
 	}
 
@@ -122,44 +143,90 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
 
-	// ゲージの進捗度を計算する
-	charge := float64(g.count * g.acceleration / 360)
-	chargeStatus := int(charge / 100)
-	gauge := ""
-	if chargeStatus > gaugeMax {
+	if g.mode == modeTitle {
+		text.Draw(screen, fmt.Sprintf("Press Space! Game Start!"), arcadeFont, 20, int(screenHeight)/2-20, color.Black)
+		text.Draw(screen, fmt.Sprintf("Press ← & → alternately!"), arcadeFont, 20, int(screenHeight)/2+0, color.Black)
+		text.Draw(screen, fmt.Sprintf("The magnet will start spinning!"), arcadeFont, 0, int(screenHeight)/2+20, color.Black)
+	} else if g.mode == modeGame {
+		// ゲージの進捗度を計算する
+		charge := float64(g.count * g.acceleration / 360)
+		chargeStatus := int(charge / 100)
+		gauge := ""
+		if chargeStatus > gaugeMax {
+			gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
+			gauge += strings.Repeat("|", gaugeMax)
+		} else if chargeStatus >= 0 {
+			gauge = "[" + strconv.Itoa(chargeStatus) + "/" + strconv.Itoa(gaugeMax) + "]"
+			gauge += strings.Repeat("|", chargeStatus)
+		} else {
+			gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
+		}
+
+		text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
+		text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
+		if g.hiscore < defaultScore {
+			text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
+		}
+
+		// ebitenで画像を表示に関わるオプション設定をします
+		option := &ebiten.DrawImageOptions{}
+
+		// 画像の中心をスクリーンの左上に移動させる
+		// ジオメトリマトリックス（回転や移動の処理）が適用される時の
+		// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
+		option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
+
+		// 構造体の状態を元に回転角度を算出する
+		option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
+
+		// 画像を拡大/縮小する
+		option.GeoM.Scale(coefficient, coefficient)
+
+		// 画像を好きな位置に移動させる
+		// 今回は画像をスクリーンの中心に持ってくる
+		option.GeoM.Translate(screenWidth/2, screenHeight/2)
+
+		// オプションを元に画像を描画する
+		screen.DrawImage(dinosaur1Img, option)
+	} else if g.mode == modeFinish {
+		// ゲージの進捗度を計算する
+		gauge := ""
 		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
 		gauge += strings.Repeat("|", gaugeMax)
-	} else if chargeStatus >= 0 {
-		gauge = "[" + strconv.Itoa(chargeStatus) + "/" + strconv.Itoa(gaugeMax) + "]"
-		gauge += strings.Repeat("|", chargeStatus)
-	} else {
-		gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
+
+		text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
+		text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
+		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
+		if g.hiscore < defaultScore {
+			text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
+		}
+		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
+
+		// ebitenで画像を表示に関わるオプション設定をします
+		option := &ebiten.DrawImageOptions{}
+
+		// 画像の中心をスクリーンの左上に移動させる
+		// ジオメトリマトリックス（回転や移動の処理）が適用される時の
+		// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
+		option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
+
+		// 構造体の状態を元に回転角度を算出する
+		option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
+
+		// 画像を拡大/縮小する
+		option.GeoM.Scale(coefficient, coefficient)
+
+		// 画像を好きな位置に移動させる
+		// 今回は画像をスクリーンの中心に持ってくる
+		option.GeoM.Translate(screenWidth/2, screenHeight/2)
+
+		// オプションを元に画像を描画する
+		screen.DrawImage(dinosaur1Img, option)
 	}
-
-	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
-	text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
-
-	// ebitenで画像を表示に関わるオプション設定をします
-	option := &ebiten.DrawImageOptions{}
-
-	// 画像の中心をスクリーンの左上に移動させる
-	// ジオメトリマトリックス（回転や移動の処理）が適用される時の
-	// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
-	option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
-
-	// 構造体の状態を元に回転角度を算出する
-	option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
-
-	// 画像を拡大/縮小する
-	option.GeoM.Scale(coefficient, coefficient)
-
-	// 画像を好きな位置に移動させる
-	// 今回は画像をスクリーンの中心に持ってくる
-	option.GeoM.Translate(screenWidth/2, screenHeight/2)
-
-	// オプションを元に画像を描画する
-	screen.DrawImage(dinosaur1Img, option)
 }
 
 // Layout関数は、ウィンドウのリサイズの挙動を決定します。画面サイズを返すのが無難だが適宜調整してください。
