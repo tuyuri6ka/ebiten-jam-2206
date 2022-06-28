@@ -28,7 +28,7 @@ const (
 
 	fontSize    = 10
 	coefficient = 1
-	gaugeMax    = 5
+	chargeMax    = 500
 
 	// gmae modes
 	modeTitle  = 0
@@ -91,8 +91,7 @@ func (g *Game) Update() error {
 
 		// チャージが満タンになったらゲームクリアになる
 		charge := float64(g.count * g.acceleration / 360)
-		chargeStatus := int(charge / 100)
-		if chargeStatus >= gaugeMax {
+		if charge >= float64(chargeMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
 			if g.score < g.hiscore {
@@ -145,19 +144,17 @@ func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
 
 	if g.mode == modeGame {
-		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 30, color.Black)
 	} else if g.mode == modeFinish {
-		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
-		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 50, color.Black)
 		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
 	} else {
 		// 何もしない
 	}
 
 	if g.hiscore < defaultScore {
-		text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
+		text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 40, color.Black)
 	} else {
 		// 何もしない
 	}
@@ -199,14 +196,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		charge := float64(g.count * g.acceleration / 360)
 		chargeStatus := int(charge / 100)
 		gauge := ""
-		if chargeStatus > gaugeMax {
-			gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
-			gauge += strings.Repeat("|", gaugeMax)
-		} else if chargeStatus >= 0 {
-			gauge = "[" + strconv.Itoa(chargeStatus) + "/" + strconv.Itoa(gaugeMax) + "]"
+		if charge > chargeMax {
+			gauge = "[" + strconv.Itoa(chargeMax) + "/" + strconv.Itoa(chargeMax) + "]"
+			gauge += strings.Repeat("|", chargeStatus)
+		} else if charge >= 0 {
+			gauge = "[" + strconv.Itoa(int(charge)) + "/" + strconv.Itoa(chargeMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else {
-			gauge = "[0" + "/" + strconv.Itoa(gaugeMax) + "]"
+			gauge = "[0" + "/" + strconv.Itoa(chargeMax) + "]"
 		}
 
 		// テキストを画面に表示する
@@ -220,8 +217,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if g.mode == modeFinish {
 		// ゲージの進捗度を計算する
 		gauge := ""
-		gauge = "[" + strconv.Itoa(gaugeMax) + "/" + strconv.Itoa(gaugeMax) + "]"
-		gauge += strings.Repeat("|", gaugeMax)
+		gauge = "[" + strconv.Itoa(chargeMax) + "/" + strconv.Itoa(chargeMax) + "]"
+		gauge += strings.Repeat("|", chargeMax/100)
 
 		// テキストを画面に表示する
 		charge := float64(g.count * g.acceleration / 360)
