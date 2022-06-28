@@ -144,7 +144,7 @@ func (g *Game) isKeyJustPressed(key ebiten.Key) bool {
 
 func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("gauge: %s", gauge), arcadeFont, 20, 10, color.Black)
-	text.Draw(screen, fmt.Sprintf("verocity: %d", g.angularVelocity), arcadeFont, 20, 20, color.Black)
+	text.Draw(screen, fmt.Sprintf("velocity: %d", g.angularVelocity), arcadeFont, 20, 20, color.Black)
 
 	if g.mode == modeGame {
 		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 30, color.Black)
