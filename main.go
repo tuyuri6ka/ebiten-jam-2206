@@ -54,6 +54,7 @@ type Game struct {
 	score        int
 	hiscore      int
 	acceleration int
+	rotateNum    float64
 
 	prevKey    ebiten.Key
 	currentKey ebiten.Key
@@ -68,6 +69,7 @@ func (g *Game) init() *Game {
 	g.count = 0
 	g.score = 0
 	g.acceleration = 0
+	g.rotateNum = 0
 
 	return g
 }
@@ -90,8 +92,8 @@ func (g *Game) Update() error {
 		}
 
 		// チャージが満タンになったらゲームクリアになる
-		rotateNum := float64(g.count * g.acceleration / 360)
-		if rotateNum >= float64(rotateNumMax) {
+		g.rotateNum += float64(g.count * g.acceleration / 360)
+		if g.rotateNum >= float64(rotateNumMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
 			if g.score < g.hiscore {
@@ -193,21 +195,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("The magnet will start spinning!"), arcadeFont, 0, int(screenHeight)/2+20, color.Black)
 	} else if g.mode == modeGame {
 		// ゲージの進捗度を計算する
-		rotateNum := float64(g.count * g.acceleration / 360)
-		chargeStatus := int(rotateNum / 100)
+		g.rotateNum += float64(g.count * g.acceleration / 360)
+		chargeStatus := int(g.rotateNum / 100)
 		gauge := ""
-		if rotateNum > rotateNumMax {
+		if g.rotateNum > rotateNumMax {
 			gauge = "[" + strconv.Itoa(rotateNumMax) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
-		} else if rotateNum >= 0 {
-			gauge = "[" + strconv.Itoa(int(rotateNum)) + "/" + strconv.Itoa(rotateNumMax) + "]"
+		} else if g.rotateNum >= 0 {
+			gauge = "[" + strconv.Itoa(int(g.rotateNum)) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else {
 			gauge = "[0" + "/" + strconv.Itoa(rotateNumMax) + "]"
 		}
 
 		// テキストを画面に表示する
-		textDraw(g, gauge, rotateNum, screen)
+		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
 		option := prepareDrawOption(g)
@@ -221,8 +223,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		gauge += strings.Repeat("|", rotateNumMax/100)
 
 		// テキストを画面に表示する
-		rotateNum := float64(g.count * g.acceleration / 360)
-		textDraw(g, gauge, rotateNum, screen)
+		g.rotateNum += float64(g.count * g.acceleration / 360)
+		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
 		option := prepareDrawOption(g)
