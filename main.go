@@ -23,8 +23,8 @@ import (
 const (
 	screenWidth  = 320
 	screenHeight = 320
-	imageWidth = 224
-	imageHeight = 224
+	imageWidth   = 224
+	imageHeight  = 224
 
 	fontSize    = 10
 	coefficient = 1
@@ -147,7 +147,7 @@ func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 	if g.mode == modeGame {
 		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
 		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
-	}	else if g.mode == modeFinish {
+	} else if g.mode == modeFinish {
 		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax*100), arcadeFont, 20, 30, color.Black)
 		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
 		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
