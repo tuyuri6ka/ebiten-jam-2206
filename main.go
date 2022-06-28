@@ -144,19 +144,17 @@ func textDraw(g *Game, gauge string, charge float64, screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("acceleration: %d", g.acceleration), arcadeFont, 20, 20, color.Black)
 
 	if g.mode == modeGame {
-		text.Draw(screen, fmt.Sprintf("charge: %g", charge), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 40, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.count), arcadeFont, 20, 30, color.Black)
 	} else if g.mode == modeFinish {
-		text.Draw(screen, fmt.Sprintf("charge: %d", gaugeMax), arcadeFont, 20, 30, color.Black)
-		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 40, color.Black)
-		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 60, color.Black)
+		text.Draw(screen, fmt.Sprintf("score: %d", g.score), arcadeFont, 20, 30, color.Black)
+		text.Draw(screen, fmt.Sprintf("%s", "Finish!!! \\(^o^)/"), arcadeFont, 20, 50, color.Black)
 		text.Draw(screen, fmt.Sprintf("%s", "Restart game. Esc."), arcadeFont, 20, 300, color.Black)
 	} else {
 		// 何もしない
 	}
 
 	if g.hiscore < defaultScore {
-		text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 50, color.Black)
+		text.Draw(screen, fmt.Sprintf("hiscore: %d", g.hiscore), arcadeFont, 20, 40, color.Black)
 	} else {
 		// 何もしない
 	}
