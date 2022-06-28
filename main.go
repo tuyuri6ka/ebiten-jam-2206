@@ -38,7 +38,7 @@ const (
 
 var (
 	electromagnetImg *ebiten.Image
-	arcadeFont   font.Face
+	arcadeFont       font.Face
 )
 
 //go:embed resources/images/electromagnet.png
