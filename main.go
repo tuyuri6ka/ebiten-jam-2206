@@ -26,9 +26,9 @@ const (
 	imageWidth   = 224
 	imageHeight  = 224
 
-	fontSize    = 10
-	coefficient = 1
-	chargeMax    = 500
+	fontSize     = 10
+	coefficient  = 1
+	rotateNumMax = 500
 
 	// gmae modes
 	modeTitle  = 0
@@ -91,7 +91,7 @@ func (g *Game) Update() error {
 
 		// チャージが満タンになったらゲームクリアになる
 		charge := float64(g.count * g.acceleration / 360)
-		if charge >= float64(chargeMax) {
+		if charge >= float64(rotateNumMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
 			if g.score < g.hiscore {
@@ -196,14 +196,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		charge := float64(g.count * g.acceleration / 360)
 		chargeStatus := int(charge / 100)
 		gauge := ""
-		if charge > chargeMax {
-			gauge = "[" + strconv.Itoa(chargeMax) + "/" + strconv.Itoa(chargeMax) + "]"
+		if charge > rotateNumMax {
+			gauge = "[" + strconv.Itoa(rotateNumMax) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else if charge >= 0 {
-			gauge = "[" + strconv.Itoa(int(charge)) + "/" + strconv.Itoa(chargeMax) + "]"
+			gauge = "[" + strconv.Itoa(int(charge)) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else {
-			gauge = "[0" + "/" + strconv.Itoa(chargeMax) + "]"
+			gauge = "[0" + "/" + strconv.Itoa(rotateNumMax) + "]"
 		}
 
 		// テキストを画面に表示する
@@ -217,8 +217,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if g.mode == modeFinish {
 		// ゲージの進捗度を計算する
 		gauge := ""
-		gauge = "[" + strconv.Itoa(chargeMax) + "/" + strconv.Itoa(chargeMax) + "]"
-		gauge += strings.Repeat("|", chargeMax/100)
+		gauge = "[" + strconv.Itoa(rotateNumMax) + "/" + strconv.Itoa(rotateNumMax) + "]"
+		gauge += strings.Repeat("|", rotateNumMax/100)
 
 		// テキストを画面に表示する
 		charge := float64(g.count * g.acceleration / 360)
