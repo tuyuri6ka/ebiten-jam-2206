@@ -25,7 +25,7 @@ const (
 	screenHeight = 320
 
 	fontSize    = 10
-	coefficient = 0.4
+	coefficient = 1
 	gaugeMax    = 5
 
 	// gmae modes
@@ -37,12 +37,12 @@ const (
 )
 
 var (
-	dinosaur1Img *ebiten.Image
-	arcadeFont   font.Face
+	electromagnetImg *ebiten.Image
+	arcadeFont       font.Face
 )
 
-//go:embed resources/images/dinosaur_01.png
-var byteDinosaur1Img []byte
+//go:embed resources/images/electromagnet.png
+var byteElectroMagnetImg []byte
 
 // ebiten.Game interface を満たす型がEbitenには必要なので、
 // この Game 構造体に Update, Draw, Layout 関数を持たせます。
@@ -176,7 +176,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// 画像の中心をスクリーンの左上に移動させる
 		// ジオメトリマトリックス（回転や移動の処理）が適用される時の
 		// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
-		option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
+		option.GeoM.Translate(-float64(224/2), -float64(224)/2)
 
 		// 構造体の状態を元に回転角度を算出する
 		option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
@@ -189,7 +189,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		option.GeoM.Translate(screenWidth/2, screenHeight/2)
 
 		// オプションを元に画像を描画する
-		screen.DrawImage(dinosaur1Img, option)
+		screen.DrawImage(electromagnetImg, option)
 	} else if g.mode == modeFinish {
 		// ゲージの進捗度を計算する
 		gauge := ""
@@ -212,7 +212,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// 画像の中心をスクリーンの左上に移動させる
 		// ジオメトリマトリックス（回転や移動の処理）が適用される時の
 		// 原点が画面の左上だから、加工のために中心に配置される画像を一旦原点に移動させる
-		option.GeoM.Translate(-float64(screenWidth)/2, -float64(screenHeight)/2)
+		option.GeoM.Translate(-float64(224)/2, -float64(224)/2)
 
 		// 構造体の状態を元に回転角度を算出する
 		option.GeoM.Rotate(float64(float64((g.count*g.acceleration)%360) * 2 * math.Pi / 360))
@@ -225,7 +225,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		option.GeoM.Translate(screenWidth/2, screenHeight/2)
 
 		// オプションを元に画像を描画する
-		screen.DrawImage(dinosaur1Img, option)
+		screen.DrawImage(electromagnetImg, option)
 	}
 }
 
@@ -237,11 +237,11 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 // init関数はパッケージの初期化に使われる特殊な関数で、main関数が呼ばれる前に実行されます。
 // ここではとりあえず画像ファイル、フォントデータを読み込むのに利用しています。
 func init() {
-	img, _, err := image.Decode(bytes.NewReader(byteDinosaur1Img))
+	img, _, err := image.Decode(bytes.NewReader(byteElectroMagnetImg))
 	if err != nil {
 		log.Fatal(err)
 	}
-	dinosaur1Img = ebiten.NewImageFromImage(img)
+	electromagnetImg = ebiten.NewImageFromImage(img)
 
 	tt, err := opentype.Parse(fonts.PressStart2P_ttf)
 	if err != nil {
