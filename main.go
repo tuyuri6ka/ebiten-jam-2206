@@ -29,6 +29,7 @@ const (
 	fontSize     = 10
 	coefficient  = 1
 	rotateNumMax = 500
+	fps int = 1
 
 	// gmae modes
 	modeTitle  = 0
@@ -92,7 +93,7 @@ func (g *Game) Update() error {
 		}
 
 		// チャージが満タンになったらゲームクリアになる
-		g.rotateNum += float64(g.count * g.acceleration / 360)
+		g.rotateNum += float64(fps * g.acceleration) / 360
 		if g.rotateNum >= float64(rotateNumMax) {
 			// 記録の保存 端数は切り捨て
 			g.score = g.count
@@ -195,7 +196,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("The magnet will start spinning!"), arcadeFont, 0, int(screenHeight)/2+20, color.Black)
 	} else if g.mode == modeGame {
 		// ゲージの進捗度を計算する
-		g.rotateNum += float64(g.count * g.acceleration / 360)
+		g.rotateNum += float64(fps * g.acceleration)/360
 		chargeStatus := int(g.rotateNum / 100)
 		gauge := ""
 		if g.rotateNum > rotateNumMax {
@@ -205,7 +206,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			gauge = "[" + strconv.Itoa(int(g.rotateNum)) + "/" + strconv.Itoa(rotateNumMax) + "]"
 			gauge += strings.Repeat("|", chargeStatus)
 		} else {
-			gauge = "[0" + "/" + strconv.Itoa(rotateNumMax) + "]"
+			gauge = "[" + strconv.Itoa(int(g.rotateNum)) + "/" + strconv.Itoa(rotateNumMax) + "]"
 		}
 
 		// テキストを画面に表示する
@@ -223,7 +224,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		gauge += strings.Repeat("|", rotateNumMax/100)
 
 		// テキストを画面に表示する
-		g.rotateNum += float64(g.count * g.acceleration / 360)
+		g.rotateNum += float64(fps * g.acceleration) / 360
 		textDraw(g, gauge, g.rotateNum, screen)
 
 		// ebitenで画像を表示に関わるオプション設定をします
