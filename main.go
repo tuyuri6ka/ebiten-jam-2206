@@ -275,7 +275,7 @@ func _main() error {
 	}
 
 	// ウィンドウズサイズとウィンドウ上部の表示タイトルを指定します。
-	ebiten.SetWindowTitle("Animation (Ebiten Demo)")
+	ebiten.SetWindowTitle("ElectroMagnetCharger (EbitengineGameJam202206)")
 	ebiten.SetWindowSize(screenWidth*2, screenHeight*2)
 	return ebiten.RunGame(g)
 }
